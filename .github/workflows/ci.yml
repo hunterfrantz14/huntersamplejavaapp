@@ -24,11 +24,19 @@ jobs:
       - name: Build with Maven
         run: ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (with update + log)
+      - name: Run OWASP Dependency Check (with update + log + debug)
         run: |
           curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.2.0/dependency-check-9.2.0-release.zip -o dependency-check.zip
           unzip dependency-check.zip -d dependency-check
+          mkdir -p ~/.dependency-check
+
+          echo "ℹ️ Showing OWASP Dependency-Check version & options"
+          ./dependency-check/dependency-check/bin/dependency-check.sh --version || true
+          ./dependency-check/dependency-check/bin/dependency-check.sh --help | head -20 || true
+
+          echo "⚡ Running scan with update and explicit data dir"
           ./dependency-check/dependency-check/bin/dependency-check.sh \
+            --data ~/.dependency-check \
             --update \
             --project "huntersamplejavaapp" \
             --scan ./target \
@@ -36,6 +44,9 @@ jobs:
             --out reports \
             --disableRetireJS \
             --log odc.log
+
+          echo "📂 Listing data directory contents"
+          ls -R ~/.dependency-check || true
 
       - name: Upload OWASP Report + Logs
         uses: actions/upload-artifact@v4
