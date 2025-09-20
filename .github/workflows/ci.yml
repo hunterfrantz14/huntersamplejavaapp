@@ -34,11 +34,13 @@ jobs:
         run: |
           curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.2.0/dependency-check-9.2.0-release.zip -o dependency-check.zip
           unzip dependency-check.zip -d dependency-check
+          mkdir -p ~/.dependency-check
           ./dependency-check/dependency-check/bin/dependency-check.sh \
             --project "huntersamplejavaapp" \
             --scan ./target \
             --format HTML \
             --out reports \
+            --data ~/.dependency-check \
             --disableRetireJS
 
       - name: Upload OWASP Report
