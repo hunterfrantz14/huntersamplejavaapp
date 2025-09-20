@@ -24,37 +24,25 @@ jobs:
       - name: Build with Maven
         run: ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (with env + debug)
-        env:
-          DEPENDENCY_CHECK_DATA: ~/.dependency-check
+      - name: Run OWASP Dependency Check (Docker)
         run: |
-          curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.2.0/dependency-check-9.2.0-release.zip -o dependency-check.zip
-          unzip dependency-check.zip -d dependency-check
-          mkdir -p ~/.dependency-check
-
-          echo "ℹ️ OWASP Dependency-Check version:"
-          ./dependency-check/dependency-check/bin/dependency-check.sh --version || true
-
-          echo "⚡ Running scan with explicit data dir + update"
-          ./dependency-check/dependency-check/bin/dependency-check.sh \
+          mkdir -p reports
+          docker run --rm \
+            -v ${{ github.workspace }}:/src \
+            -v ${{ github.workspace }}/reports:/report \
+            owasp/dependency-check:latest \
             --project "huntersamplejavaapp" \
-            --scan ./target \
+            --scan /src/target \
             --format HTML \
-            --out reports \
-            --update \
+            --out /report \
             --disableRetireJS \
-            --log odc.log
-
-          echo "📂 Listing data directory contents"
-          ls -R ~/.dependency-check || true
+            --log /report/odc.log
 
       - name: Upload OWASP Report + Logs
         uses: actions/upload-artifact@v4
         with:
           name: owasp-output
-          path: |
-            reports
-            odc.log
+          path: reports
 
       - name: SonarQube Analysis
         env:
