@@ -21,10 +21,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Cache OWASP Dependency-Check DB
+        uses: actions/cache@v3
+        with:
+          path: ~/.dependency-check
+          key: ${{ runner.os }}-dependency-check
+
       - name: Build with Maven
         run: ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (Offline Mode)
+      - name: Run OWASP Dependency Check
         run: |
           curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.2.0/dependency-check-9.2.0-release.zip -o dependency-check.zip
           unzip dependency-check.zip -d dependency-check
@@ -33,7 +39,6 @@ jobs:
             --scan ./target \
             --format HTML \
             --out reports \
-            --noupdate \
             --disableRetireJS
 
       - name: Upload OWASP Report
@@ -76,15 +81,3 @@ jobs:
 
           echo "❌ Timed out waiting for Quality Gate result"
           exit 1
-
-      - name: Trigger CD Pipeline
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          IMAGE_TAG="latest"
-          echo "🚀 Triggering CD pipeline with image tag: $IMAGE_TAG"
-          curl -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/cd.yml/dispatches \
-            -d "{\"ref\":\"main\",\"inputs\":{\"IMAGE_TAG\":\"$IMAGE_TAG\"}}"
