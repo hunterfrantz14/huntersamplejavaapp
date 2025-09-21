@@ -21,7 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🔹 Cache the OWASP Dependency-Check database between runs
+      # Cache the OWASP DB across runs
       - name: Cache OWASP Dependency-Check DB
         uses: actions/cache@v3
         with:
@@ -29,14 +29,16 @@ jobs:
           key: ${{ runner.os }}-odc-db
 
       - name: Build with Maven
-        run: ./mvnw clean package
+        run: |
+          chmod +x mvnw
+          ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (with DB fix)
+      - name: Run OWASP Dependency Check (auto-seeding DB)
         run: |
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
 
-          # Run OWASP DC with local DB (will auto-create if missing)
+          # Run OWASP DC, allow it to seed the DB into /data if missing
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
@@ -44,7 +46,7 @@ jobs:
             owasp/dependency-check:latest \
             --project "huntersamplejavaapp" \
             --scan /src/target \
-            --format HTML \
+            --format "HTML,XML" \
             --out /report \
             --data /data \
             --disableRetireJS \
