@@ -1,10 +1,6 @@
-name: CI Pipeline
+name: CI Pipeline (Seed DB)
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -21,7 +17,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # Cache the OWASP DB across runs
       - name: Cache OWASP Dependency-Check DB
         uses: actions/cache@v3
         with:
@@ -33,12 +28,11 @@ jobs:
           chmod +x mvnw
           ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (auto-seeding DB)
+      - name: Run OWASP Dependency Check (Seed DB)
         run: |
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
 
-          # Run OWASP DC, allow it to seed the DB into /data if missing
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
@@ -57,38 +51,3 @@ jobs:
         with:
           name: owasp-output
           path: reports
-
-      - name: SonarQube Analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          ./mvnw clean verify sonar:sonar \
-            -Dsonar.projectKey=huntersamplejavaapp \
-            -Dsonar.host.url=http://54.146.204.13:9000 \
-            -Dsonar.login=$SONAR_TOKEN
-
-      - name: SonarQube Quality Gate
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq
-          echo "⏳ Waiting for SonarQube Quality Gate..."
-          for i in {1..20}; do
-            STATUS=$(curl -s -u $SONAR_TOKEN: \
-              "http://54.146.204.13:9000/api/qualitygates/project_status?projectKey=huntersamplejavaapp" \
-              | jq -r '.projectStatus.status')
-
-            if [[ "$STATUS" == "OK" ]]; then
-              echo "✅ Quality Gate passed"
-              exit 0
-            elif [[ "$STATUS" == "ERROR" ]]; then
-              echo "❌ Quality Gate failed"
-              exit 1
-            else
-              echo "⌛ Status: $STATUS (retrying in 30s)"
-              sleep 30
-            fi
-          done
-
-          echo "❌ Timed out waiting for Quality Gate result"
-          exit 1
