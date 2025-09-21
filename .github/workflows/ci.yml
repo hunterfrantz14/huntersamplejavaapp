@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with OWASP DB Log Fix + Target Check) 
+name: CI Pipeline (Offline-Ready with OWASP DB Log Fix + Target Check)
 
 on:
   push:
@@ -64,6 +64,7 @@ jobs:
 
       - name: 🧪 Run OWASP Dependency Check (Offline)
         run: |
+          echo "🚦 Running scan in offline mode..."
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
@@ -71,7 +72,7 @@ jobs:
             owasp/dependency-check:latest \
             --project "huntersamplejavaapp" \
             --scan /src/target \
-            --format "HTML,XML" \
+            --format HTML --format XML \
             --out /report \
             --data /data \
             --disableRetireJS \
