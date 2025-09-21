@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with Cached OWASP DB)
+name: CI Pipeline (Offline-Ready with OWASP DB Log)
 
 on:
   push:
@@ -38,15 +38,24 @@ jobs:
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
 
-      - name: 🧲 Download OWASP DB (if not cached)
+      - name: 📥 Download OWASP DB (with log)
         if: steps.cache-odc.outputs.cache-hit != 'true'
         run: |
-          echo "⏬ Downloading OWASP DB (online)..."
+          echo "⏬ Downloading OWASP DB..."
           docker run --rm \
             -v ${{ github.workspace }}/odc-data:/data \
+            -v ${{ github.workspace }}/reports:/report \
             owasp/dependency-check:latest \
             --updateonly \
-            --data /data
+            --data /data \
+            --log /report/odc-update.log || echo "⚠️ DB update failed"
+
+      - name: 📤 Upload ODC Update Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: odc-update-log
+          path: reports/odc-update.log
 
       - name: 🧪 Run OWASP Dependency Check (Offline)
         run: |
