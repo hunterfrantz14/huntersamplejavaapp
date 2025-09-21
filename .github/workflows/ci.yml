@@ -58,9 +58,10 @@ jobs:
           name: odc-update-log
           path: reports/odc-update.log
 
-      - name: 🔎 Check if build output exists
+      - name: 🔍 Check contents of target folder
         run: |
-          ls -R target || echo "⚠️ No build output found in target/"
+          echo "📁 Listing target folder:"
+          ls -l target || echo "⚠️ target folder not found"
 
       - name: 🧪 Run OWASP Dependency Check (Offline)
         run: |
