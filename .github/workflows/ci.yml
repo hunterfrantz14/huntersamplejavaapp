@@ -21,7 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🔹 Cache the OWASP DB between runs
+      # 🔹 Cache the OWASP Dependency-Check database between runs
       - name: Cache OWASP Dependency-Check DB
         uses: actions/cache@v3
         with:
@@ -35,6 +35,8 @@ jobs:
         run: |
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
+
+          # Run OWASP DC with local DB (will auto-create if missing)
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
@@ -45,7 +47,6 @@ jobs:
             --format HTML \
             --out /report \
             --data /data \
-            --disableNVD \
             --disableRetireJS \
             --log /report/odc.log
 
