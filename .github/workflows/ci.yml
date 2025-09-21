@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with OWASP DB Log Fix)
+name: CI Pipeline (Offline-Ready with H2 Lock Fix)
 
 on:
   push:
@@ -38,21 +38,18 @@ jobs:
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
 
-      - name: 🧹 Clean H2 lock files (if any)
-        run: |
-          rm -f ${{ github.workspace }}/odc-data/*.lck
-          rm -f ${{ github.workspace }}/odc-data/*.trace.db
-
-      - name: 📥 Download OWASP DB (with log)
+      - name: 📥 Download OWASP DB (isolated volume + log)
         if: steps.cache-odc.outputs.cache-hit != 'true'
         run: |
+          mkdir -p ${{ github.workspace }}/odc-temp
           docker run --rm \
-            -v ${{ github.workspace }}/odc-data:/data \
+            -v ${{ github.workspace }}/odc-temp:/data \
             -v ${{ github.workspace }}/reports:/report \
             owasp/dependency-check:latest \
             --updateonly \
             --data /data \
             --log /report/odc-update.log || echo "⚠️ DB update failed"
+          cp -r ${{ github.workspace }}/odc-temp/* ${{ github.workspace }}/odc-data/
 
       - name: 📤 Upload ODC Update Log
         if: always()
