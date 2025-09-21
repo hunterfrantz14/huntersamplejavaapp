@@ -21,22 +21,32 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # 🔹 Cache the OWASP DB between runs
+      - name: Cache OWASP Dependency-Check DB
+        uses: actions/cache@v3
+        with:
+          path: odc-data
+          key: ${{ runner.os }}-odc-db
+
       - name: Build with Maven
         run: ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (skip NVD)
+      - name: Run OWASP Dependency Check (with DB fix)
         run: |
-          mkdir -p reports
+          mkdir -p ${{ github.workspace }}/reports
+          mkdir -p ${{ github.workspace }}/odc-data
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
+            -v ${{ github.workspace }}/odc-data:/data \
             owasp/dependency-check:latest \
             --project "huntersamplejavaapp" \
             --scan /src/target \
             --format HTML \
             --out /report \
-            --disableRetireJS \
+            --data /data \
             --disableNVD \
+            --disableRetireJS \
             --log /report/odc.log
 
       - name: Upload OWASP Report + Logs
