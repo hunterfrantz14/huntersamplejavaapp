@@ -1,6 +1,10 @@
-name: CI Pipeline (Seed DB)
+name: CI Pipeline (Offline)
 
 on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -28,7 +32,7 @@ jobs:
           chmod +x mvnw
           ./mvnw clean package
 
-      - name: Run OWASP Dependency Check (Seed DB)
+      - name: Run OWASP Dependency Check (Offline)
         run: |
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
@@ -43,6 +47,7 @@ jobs:
             --format "HTML,XML" \
             --out /report \
             --data /data \
+            --disableNVD \
             --disableRetireJS \
             --log /report/odc.log
 
