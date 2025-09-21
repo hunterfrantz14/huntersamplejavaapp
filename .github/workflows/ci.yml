@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with H2 Lock Fix)
+name: CI Pipeline (Offline-Ready with OWASP DB Log Fix + Target Debug)
 
 on:
   push:
@@ -57,6 +57,10 @@ jobs:
         with:
           name: odc-update-log
           path: reports/odc-update.log
+
+      - name: 🔎 Check if build output exists
+        run: |
+          ls -R target || echo "⚠️ No build output found in target/"
 
       - name: 🧪 Run OWASP Dependency Check (Offline)
         run: |
