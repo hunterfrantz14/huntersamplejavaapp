@@ -72,7 +72,8 @@ jobs:
             owasp/dependency-check:latest \
             --project "huntersamplejavaapp" \
             --scan /src/target \
-            --format HTML --format XML \
+            --format HTML \
+            --format XML \
             --out /report \
             --data /data \
             --disableRetireJS \
