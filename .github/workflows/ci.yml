@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with OWASP DB Log Fix + Target Debug)
+name: CI Pipeline (Offline-Ready with OWASP DB Log Fix + Target Check)
 
 on:
   push:
