@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with OWASP DB Log)
+name: CI Pipeline (Offline-Ready with OWASP DB Log Fix)
 
 on:
   push:
@@ -38,10 +38,14 @@ jobs:
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
 
+      - name: 🧹 Clean H2 lock files (if any)
+        run: |
+          rm -f ${{ github.workspace }}/odc-data/*.lck
+          rm -f ${{ github.workspace }}/odc-data/*.trace.db
+
       - name: 📥 Download OWASP DB (with log)
         if: steps.cache-odc.outputs.cache-hit != 'true'
         run: |
-          echo "⏬ Downloading OWASP DB..."
           docker run --rm \
             -v ${{ github.workspace }}/odc-data:/data \
             -v ${{ github.workspace }}/reports:/report \
@@ -59,8 +63,6 @@ jobs:
 
       - name: 🧪 Run OWASP Dependency Check (Offline)
         run: |
-          echo "🚦 Running scan in offline mode..."
-          ls -l odc-data  # Debugging output
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
