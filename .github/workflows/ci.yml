@@ -1,4 +1,4 @@
-name: CI Pipeline (Offline-Ready with OWASP Fix)
+name: CI Pipeline (Offline-Ready with Cached OWASP DB)
 
 on:
   push:
@@ -26,13 +26,22 @@ jobs:
           chmod +x mvnw
           ./mvnw clean package
 
+      - name: 💾 Cache OWASP DB
+        id: cache-odc
+        uses: actions/cache@v3
+        with:
+          path: odc-data
+          key: owasp-db-v1
+
       - name: 📂 Create reports + data folders
         run: |
           mkdir -p ${{ github.workspace }}/reports
           mkdir -p ${{ github.workspace }}/odc-data
 
-      - name: 📥 Download OWASP DB (update only)
+      - name: 🧲 Download OWASP DB (if not cached)
+        if: steps.cache-odc.outputs.cache-hit != 'true'
         run: |
+          echo "⏬ Downloading OWASP DB (online)..."
           docker run --rm \
             -v ${{ github.workspace }}/odc-data:/data \
             owasp/dependency-check:latest \
@@ -41,6 +50,8 @@ jobs:
 
       - name: 🧪 Run OWASP Dependency Check (Offline)
         run: |
+          echo "🚦 Running scan in offline mode..."
+          ls -l odc-data  # Debugging output
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             -v ${{ github.workspace }}/reports:/report \
